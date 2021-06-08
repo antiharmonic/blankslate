@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Blank Slate</title>
+<style type="text/css">
+#blankslate {
+width: 66%;
+height: 100vh;
+margin-left: auto;
+margin-right: auto;
+display: block;
+border: none;
+outline: none;
+resize: none;
+font-family: sans-serif;
+}
+body {
+  margin: 0;
+}
+#bgcolorpicker {
+  left: 20px;
+}
+#fgcolorpicker {
+  left: 80px;
+}
+
+.blankcolorpicker {
+  position: absolute;
+  top: 20px;
+  outline: none;
+  border: none;
+}
+
+</style>
+</head>
+<body>
+<input type="color" class="blankcolorpicker" id="bgcolorpicker" value="#111111">
+<input type="color" class="blankcolorpicker" id="fgcolorpicker" value="#cccccc">
+<textarea id="blankslate" autofocus >
+
+</textarea>
+<script language="javascript" src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script language="javascript">
+
+function update_bg_color(bg) {
+  $('body').css('background-color', bg);
+  $('#blankslate').css('background-color', bg);
+  $('.blankcolorpicker').css('background-color', bg);
+  window.localStorage.setItem('bgColor', bg);
+}  
+ 
+function update_fg_color(fg) {
+  $('body').css('color', fg);
+  $('#blankslate').css('color', fg);
+  window.localStorage.setItem('fgColor', fg);    
+
+} 
+
+$( document ).ready(function() {
+  data = window.localStorage.getItem('blankslate');
+  fg = window.localStorage.getItem('fgColor');
+  bg = window.localStorage.getItem('bgColor');
+
+  if (data !== null) {
+    $('#blankslate').val(data);
+  }
+
+  if (bg === null) {
+    bg = $('#bgcolorpicker').val()
+  }
+  update_bg_color(bg);
+
+  if (fg === null) {
+   fg = $('#fgcolorpicker').val();
+  }
+  update_fg_color(fg);  
+});
+
+$('#blankslate').on('keyup', function(e) {
+  data = $('#blankslate').val();
+  window.localStorage.setItem('blankslate', data);
+});
+
+$('#bgcolorpicker').change(function(e) {
+  update_bg_color($(this).val());
+});
+
+$('#fgcolorpicker').change(function(e) {
+  update_fg_color($(this).val());
+});
+</script>
+</body>
+</html>
