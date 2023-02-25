@@ -24,21 +24,30 @@ body {
   left: 80px;
 }
 
-.blankcolorpicker {
+.controls {
   position: absolute;
   top: 20px;
+}
+
+.blankcolorpicker {
   outline: none;
   border: none;
 }
 
+#save {
+margin-left: auto;
+margin-right: auto;
+right: 20px; 
+}
 </style>
 </head>
 <body>
-<input type="color" class="blankcolorpicker" id="bgcolorpicker" value="#111111">
-<input type="color" class="blankcolorpicker" id="fgcolorpicker" value="#cccccc">
-<textarea id="blankslate" autofocus >
+<input type="color" class="blankcolorpicker controls" id="bgcolorpicker" value="#111111">
+<input type="color" class="blankcolorpicker controls" id="fgcolorpicker" value="#cccccc">
+<textarea id="blankslate" autofocus spellcheck="false">
 
 </textarea>
+<button class="controls" id='save' onclick="saveTextAsFile(blankslate.value, 'blankslate.txt')">Save</button>
 <script language="javascript" src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script language="javascript">
 
@@ -88,6 +97,32 @@ $('#bgcolorpicker').change(function(e) {
 $('#fgcolorpicker').change(function(e) {
   update_fg_color($(this).val());
 });
+
+// ruthlessly stolen from https://stackoverflow.com/questions/609530/download-textarea-contents-as-a-file-using-only-javascript-no-server-side
+function saveTextAsFile(textToWrite, fileNameToSaveAs)
+{
+    	var textFileAsBlob = new Blob([textToWrite], {type:'text/plain'}); 
+    	var downloadLink = document.createElement("a");
+    	downloadLink.download = fileNameToSaveAs;
+    	downloadLink.innerHTML = "Download File";
+    	if (window.webkitURL != null)
+    	{
+    		// Chrome allows the link to be clicked
+    		// without actually adding it to the DOM.
+    		downloadLink.href = window.webkitURL.createObjectURL(textFileAsBlob);
+    	}
+    	else
+    	{
+    		// Firefox requires the link to be added to the DOM
+    		// before it can be clicked.
+    		downloadLink.href = window.URL.createObjectURL(textFileAsBlob);
+    		downloadLink.onclick = destroyClickedElement;
+    		downloadLink.style.display = "none";
+    		document.body.appendChild(downloadLink);
+    	}
+    
+    	downloadLink.click();
+}
 </script>
 </body>
 </html>
