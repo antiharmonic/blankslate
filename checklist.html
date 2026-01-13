@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Checklist (localStorage)</title>
+  <style>
+    :root{
+      --bg:#111111;
+      --fg:#cccccc;
+      --muted:#888;
+      --card:#1a1a1a;
+      --border:#2a2a2a;
+      --accent:#4da3ff;
+      --danger:#ff5c5c;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--fg);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+    }
+    .wrap{
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 18px 14px 60px;
+    }
+    header{
+      position: sticky;
+      top: 0;
+      background: linear-gradient(to bottom, rgba(17,17,17,0.98), rgba(17,17,17,0.85));
+      backdrop-filter: blur(6px);
+      padding: 10px 0 12px;
+      z-index: 5;
+      border-bottom: 1px solid var(--border);
+    }
+    h1{
+      font-size: 16px;
+      font-weight: 650;
+      margin: 0 0 10px;
+      color: var(--fg);
+      letter-spacing: 0.2px;
+    }
+
+    .row{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    .row.space{justify-content:space-between}
+    .controls{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    input[type="text"]{
+      flex: 1 1 340px;
+      min-width: 220px;
+      background: var(--card);
+      color: var(--fg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      outline: none;
+    }
+    input[type="text"]::placeholder{color:var(--muted)}
+    button{
+      background: var(--card);
+      color: var(--fg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      cursor:pointer;
+      font-weight: 600;
+    }
+    button:hover{border-color:#3a3a3a}
+    button.primary{
+      border-color: rgba(77,163,255,0.35);
+      box-shadow: 0 0 0 1px rgba(77,163,255,0.15) inset;
+    }
+    button.danger{
+      border-color: rgba(255,92,92,0.35);
+      box-shadow: 0 0 0 1px rgba(255,92,92,0.12) inset;
+    }
+    .hint{
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 8px;
+      line-height: 1.4;
+    }
+
+    .card{
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      margin-top: 14px;
+    }
+
+    ul{
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .item{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      padding: 10px 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .item:last-child{border-bottom:none}
+    .item input[type="checkbox"]{
+      width: 18px;
+      height: 18px;
+      accent-color: var(--accent);
+      cursor:pointer;
+      flex: 0 0 auto;
+    }
+    .label{
+      flex: 1 1 auto;
+      padding: 7px 8px;
+      border-radius: 10px;
+      border: 1px solid transparent;
+      outline:none;
+      min-height: 18px;
+      line-height: 1.3;
+      word-break: break-word;
+      width: 100%;
+    }
+    .label:focus{
+      border-color: rgba(77,163,255,0.45);
+      background: rgba(77,163,255,0.06);
+    }
+    .meta{
+      color: var(--muted);
+      font-size: 12px;
+      margin-left: auto;
+      white-space: nowrap;
+    }
+    .iconbtn{
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      cursor:pointer;
+      font-weight: 800;
+      line-height: 1;
+    }
+    .iconbtn:hover{color:var(--fg); border-color:#3a3a3a}
+    .iconbtn.danger:hover{color:var(--danger); border-color: rgba(255,92,92,0.55)}
+
+    .split{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+    /*@media (min-width: 840px){
+      .split{grid-template-columns: 1fr 1fr;}
+    }*/
+
+    .logrow{
+      display:flex;
+      align-items:baseline;
+      gap:10px;
+      padding: 10px 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .logrow:last-child{border-bottom:none}
+    .logtext{flex:1 1 auto; word-break:break-word}
+    .logtime{color:var(--muted); font-size:12px; white-space:nowrap}
+
+    textarea{
+      width:100%;
+      min-height: 130px;
+      background: #0f0f0f;
+      color: var(--fg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      outline:none;
+      resize: vertical;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    details > summary{
+      cursor:pointer;
+      color: var(--fg);
+      font-weight: 700;
+      list-style: none;
+      user-select:none;
+    }
+    details > summary::-webkit-details-marker{display:none}
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      margin-left: 10px;
+    }
+    .empty{
+      color: var(--muted);
+      font-size: 13px;
+      padding: 10px 8px;
+    }
+    .tiny{
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .kbd{
+      border: 1px solid var(--border);
+      padding: 1px 6px;
+      border-radius: 6px;
+      background: rgba(255,255,255,0.03);
+      color: var(--fg);
+      font-weight: 700;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Checklist</h1>
+      <div class="row">
+        <input id="newItem" type="text" placeholder="Add an item… (Enter to add)" autocomplete="off" />
+        <button id="addBtn" class="primary">Add</button>
+        <button id="toggleLogBtn">Toggle log</button>
+        <button id="undoBtn" title="Undo last completion">Undo</button>
+      </div>
+      <div class="hint">
+        - Check an item → it disappears + gets logged with a timestamp.<br/>
+        - Click text to edit it. Press <span class="kbd">Enter</span> while editing to save, or click away.<br/>
+        - Everything is stored locally in your browser via <span class="kbd">localStorage</span>.
+      </div>
+    </header>
+
+    <div class="split">
+      <section class="card" id="activeCard">
+        <div class="row space" style="margin-bottom:10px;">
+          <div>
+            <strong>Active</strong>
+            <span id="activeCount" class="badge">0</span>
+          </div>
+          <div class="controls">
+            <button id="clearAllBtn" class="danger" title="Deletes all active items">Clear active</button>
+          </div>
+        </div>
+        <ul id="list"></ul>
+        <div id="emptyActive" class="empty" style="display:none;">No active items.</div>
+      </section>
+
+      <section class="card" id="logCard" style="display:none;">
+        <div class="row space" style="margin-bottom:10px;">
+          <div>
+            <strong>Completion log</strong>
+            <span id="logCount" class="badge">0</span>
+          </div>
+          <div class="controls">
+            <button id="clearLogBtn" class="danger" title="Clears the completion log">Clear log</button>
+          </div>
+        </div>
+
+        <ul id="log"></ul>
+        <div id="emptyLog" class="empty" style="display:none;">No completed items yet.</div>
+
+        <details style="margin-top:14px;">
+          <summary>Import / Export <span class="tiny">(JSON)</span></summary>
+          <div style="margin-top:10px;">
+            <textarea id="ioArea" spellcheck="false" placeholder='Click "Export" to dump data here, or paste JSON and click "Import".'></textarea>
+            <div class="row" style="margin-top:10px;">
+              <button id="exportBtn">Export</button>
+              <button id="importBtn" class="primary">Import</button>
+              <button id="downloadBtn">Download JSON</button>
+            </div>
+            <div class="hint">
+              Import overwrites your current list/log. Keep backups if you care.
+            </div>
+          </div>
+        </details>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    // --- localStorage keys ---
+    const LS_ITEMS = "checklist.items.v1";
+    const LS_LOG   = "checklist.log.v1";
+    const LS_UI    = "checklist.ui.v1";
+
+    // --- state ---
+    let items = [];
+    let log = [];
+    let lastCompletion = null; // for undo
+
+    // --- helpers ---
+    const $ = (sel) => document.querySelector(sel);
+    const nowISO = () => new Date().toISOString();
+    const formatTime = (iso) => {
+      try {
+        return new Date(iso).toLocaleString(undefined, {
+          year: "numeric",
+          month: "short",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit"
+        });
+      } catch {
+        return iso;
+      }
+    };
+    const uid = () => Math.random().toString(16).slice(2) + "-" + Date.now().toString(16);
+
+    function load() {
+      try {
+        items = JSON.parse(localStorage.getItem(LS_ITEMS) || "[]");
+        log   = JSON.parse(localStorage.getItem(LS_LOG) || "[]");
+      } catch {
+        items = [];
+        log = [];
+      }
+
+    }
+
+    function save() {
+      localStorage.setItem(LS_ITEMS, JSON.stringify(items));
+      localStorage.setItem(LS_LOG, JSON.stringify(log));
+    }
+
+    function saveUI(patch) {
+      let ui = {};
+      try { ui = JSON.parse(localStorage.getItem(LS_UI) || "{}"); } catch {}
+      ui = { ...ui, ...patch };
+      localStorage.setItem(LS_UI, JSON.stringify(ui));
+    }
+
+    function render() {
+      // Active list
+      const list = $("#list");
+      list.innerHTML = "";
+
+      $("#activeCount").textContent = items.length;
+
+      if (items.length === 0) {
+        $("#emptyActive").style.display = "";
+      } else {
+        $("#emptyActive").style.display = "none";
+        for (const it of items) {
+          const li = document.createElement("li");
+          li.className = "item";
+          li.dataset.id = it.id;
+
+          const cb = document.createElement("input");
+          cb.type = "checkbox";
+          cb.title = "Mark complete";
+          cb.addEventListener("change", () => completeItem(it.id));
+
+          const label = document.createElement("div");
+          label.className = "label";
+          label.contentEditable = "true";
+          label.spellcheck = false;
+          label.textContent = it.text;
+
+          // Save edits on blur
+          label.addEventListener("blur", () => {
+            const next = label.textContent.trim();
+            if (!next) {
+              // empty = delete
+              deleteItem(it.id);
+              return;
+            }
+            updateItemText(it.id, next);
+          });
+
+          // Save edits on Enter (but don't insert newline)
+          label.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              label.blur();
+            }
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+              // little convenience: Ctrl/Cmd+K completes item while editing
+              e.preventDefault();
+              completeItem(it.id);
+            }
+          });
+
+          const meta = document.createElement("div");
+          meta.className = "meta";
+          meta.textContent = it.createdAt ? "added " + formatTime(it.createdAt) : "";
+
+          const del = document.createElement("button");
+          del.className = "iconbtn danger";
+          del.textContent = "✕";
+          del.title = "Delete item";
+          del.addEventListener("click", () => deleteItem(it.id));
+
+          li.appendChild(cb);
+          li.appendChild(label);
+          // li.appendChild(meta); // we don't need or want the added date in the main checklist listing.
+          li.appendChild(del);
+          list.appendChild(li);
+        }
+      }
+
+      // Log
+      $("#logCount").textContent = log.length;
+
+      const logEl = $("#log");
+      logEl.innerHTML = "";
+
+      if (log.length === 0) {
+        $("#emptyLog").style.display = "";
+      } else {
+        $("#emptyLog").style.display = "none";
+        // newest first
+        const sorted = [...log].sort((a,b) => (b.completedAt||"").localeCompare(a.completedAt||""));
+        for (const entry of sorted) {
+          const row = document.createElement("li");
+          row.className = "logrow";
+
+          const txt = document.createElement("div");
+          txt.className = "logtext";
+          txt.textContent = entry.text;
+
+          const t = document.createElement("div");
+          t.className = "logtime";
+          t.textContent = formatTime(entry.completedAt);
+
+          row.appendChild(txt);
+          row.appendChild(t);
+          logEl.appendChild(row);
+        }
+      }
+
+      // IO export preview (optional: don't auto-fill to avoid overwriting)
+    }
+
+    // --- actions ---
+    function addItem(text) {
+      const cleaned = (text || "").trim();
+      if (!cleaned) return;
+
+      items.push({
+        id: uid(),
+        text: cleaned,
+        createdAt: nowISO()
+      });
+
+      save();
+      render();
+    }
+
+    function updateItemText(id, text) {
+      const idx = items.findIndex(i => i.id === id);
+      if (idx === -1) return;
+      items[idx].text = text;
+      save();
+      // no need to full re-render, but keep simple:
+      render();
+    }
+
+    function deleteItem(id) {
+      items = items.filter(i => i.id !== id);
+      save();
+      render();
+    }
+
+    function completeItem(id) {
+      const idx = items.findIndex(i => i.id === id);
+      if (idx === -1) return;
+
+      const it = items[idx];
+      const entry = {
+        id: uid(),
+        itemId: it.id,
+        text: it.text,
+        createdAt: it.createdAt || null,
+        completedAt: nowISO()
+      };
+
+      // store for undo
+      lastCompletion = {
+        item: it,
+        logEntry: entry
+      };
+
+      // remove from active, add to log
+      items.splice(idx, 1);
+      log.push(entry);
+
+      save();
+      render();
+    }
+
+    function undoLast() {
+      if (!lastCompletion) return;
+
+      const { item, logEntry } = lastCompletion;
+
+      // remove log entry (by id), restore item
+      log = log.filter(e => e.id !== logEntry.id);
+      items.push(item);
+
+      // clear undo
+      lastCompletion = null;
+
+      save();
+      render();
+    }
+
+    function clearActive() {
+      items = [];
+      save();
+      render();
+    }
+
+    function clearLog() {
+      log = [];
+      save();
+      render();
+    }
+
+    // --- import/export ---
+    function exportJSON() {
+      const payload = {
+        version: 1,
+        exportedAt: nowISO(),
+        items,
+        log
+      };
+      $("#ioArea").value = JSON.stringify(payload, null, 2);
+    }
+
+    function importJSON() {
+      const raw = $("#ioArea").value.trim();
+      if (!raw) return;
+
+      let parsed;
+      try {
+        parsed = JSON.parse(raw);
+      } catch (e) {
+        alert("That JSON is invalid.");
+        return;
+      }
+
+      if (!parsed || typeof parsed !== "object") {
+        alert("That doesn't look like export data.");
+        return;
+      }
+
+      // mild validation
+      const nextItems = Array.isArray(parsed.items) ? parsed.items : null;
+      const nextLog   = Array.isArray(parsed.log) ? parsed.log : null;
+
+      if (!nextItems || !nextLog) {
+        alert("Missing items/log arrays.");
+        return;
+      }
+
+      // normalize a bit
+      items = nextItems
+        .filter(x => x && typeof x === "object")
+        .map(x => ({
+          id: String(x.id || uid()),
+          text: String(x.text || "").trim(),
+          createdAt: x.createdAt || null
+        }))
+        .filter(x => x.text.length);
+
+      log = nextLog
+        .filter(x => x && typeof x === "object")
+        .map(x => ({
+          id: String(x.id || uid()),
+          itemId: x.itemId ? String(x.itemId) : null,
+          text: String(x.text || "").trim(),
+          createdAt: x.createdAt || null,
+          completedAt: x.completedAt || null
+        }))
+        .filter(x => x.text.length);
+
+      lastCompletion = null;
+      save();
+      render();
+    }
+
+    function downloadJSON() {
+      const payload = {
+        version: 1,
+        exportedAt: nowISO(),
+        items,
+        log
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "checklist-export.json";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    function setView(view) {
+      const activeCard = $("#activeCard");
+      const logCard = $("#logCard");
+
+      const showLog = view === "log";
+
+      // only show one at a time
+      activeCard.style.display = showLog ? "none" : "";
+      logCard.style.display = showLog ? "" : "none";
+
+      // button label helps avoid confusion
+      $("#toggleLogBtn").textContent = showLog ? "Show active" : "Show log";
+
+      saveUI({ view: showLog ? "log" : "active" });
+    }
+
+    function toggleView() {
+      const activeVisible = $("#activeCard").style.display !== "none";
+      setView(activeVisible ? "log" : "active");
+    }
+
+    // --- wire up ---
+    function init() {
+      load();
+      let ui = {};
+      try { ui = JSON.parse(localStorage.getItem(LS_UI) || "{}"); } catch {}
+      setView(ui.view === "log" ? "log" : "active");
+      render();
+
+      $("#addBtn").addEventListener("click", () => {
+        addItem($("#newItem").value);
+        $("#newItem").value = "";
+        $("#newItem").focus();
+      });
+
+      $("#newItem").addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          $("#addBtn").click();
+        }
+      });
+
+      $("#toggleLogBtn").addEventListener("click", toggleView);
+      $("#undoBtn").addEventListener("click", undoLast);
+
+      $("#clearAllBtn").addEventListener("click", () => {
+        if (confirm("Clear ALL active items?")) clearActive();
+      });
+
+      $("#clearLogBtn").addEventListener("click", () => {
+        if (confirm("Clear the completion log?")) clearLog();
+      });
+
+      $("#exportBtn").addEventListener("click", exportJSON);
+      $("#importBtn").addEventListener("click", () => {
+        if (confirm("Import will overwrite your current list and log. Continue?")) importJSON();
+      });
+      $("#downloadBtn").addEventListener("click", downloadJSON);
+    }
+
+    init();
+  </script>
+</body>
+</html>
