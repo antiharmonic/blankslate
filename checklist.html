@@ -227,6 +227,11 @@
       font-weight: 700;
       font-size: 12px;
     }
+    .item.dragging { opacity: 0.5; }
+    .label { cursor: grab; }
+    .label:active {cursor: grabbing; }
+    .item.drop-above { border-top: 2px solid rgba(77,163,255,0.75); }
+    .item.drop-below { border-bottom: 2px solid rgba(77,163,255,0.75); }
   </style>
 </head>
 <body>
@@ -303,7 +308,8 @@
     let items = [];
     let log = [];
     let lastCompletion = null; // for undo
-
+    let draggingId = null;
+    
     // --- helpers ---
     const $ = (sel) => document.querySelector(sel);
     const nowISO = () => new Date().toISOString();
@@ -368,9 +374,85 @@
 
           const label = document.createElement("div");
           label.className = "label";
-          label.contentEditable = "true";
+          label.contentEditable = "false";
+          label.dataset.editing = "0";
           label.spellcheck = false;
           label.textContent = it.text;
+
+// --- DRAG TO REORDER (drag on label, drop on li) ---
+label.draggable = true;
+
+label.addEventListener("dragstart", (e) => {
+  if (label.dataset.editing === "1") {
+    e.preventDefault();
+    return;
+  }
+  draggingId = it.id;
+  li.classList.add("dragging");
+  e.dataTransfer.effectAllowed = "move";
+  e.dataTransfer.setData("text/plain", it.id);
+});
+
+label.addEventListener("dragend", () => {
+  draggingId = null;
+  li.classList.remove("dragging");
+  // clear any leftover indicators
+  li.classList.remove("drop-above", "drop-below");
+  li.dataset.dropPos = "";
+});
+
+// Decide above/below based on mouse position over the LI
+li.addEventListener("dragover", (e) => {
+  const fromId = draggingId || e.dataTransfer.getData("text/plain");
+  if (!fromId || fromId === it.id) return;
+
+  e.preventDefault();
+
+  const rect = li.getBoundingClientRect();
+  const midpoint = rect.top + rect.height / 2;
+  const pos = e.clientY < midpoint ? "above" : "below";
+  li.dataset.dropPos = pos;
+
+  li.classList.toggle("drop-above", pos === "above");
+  li.classList.toggle("drop-below", pos === "below");
+
+  e.dataTransfer.dropEffect = "move";
+});
+
+li.addEventListener("dragleave", () => {
+  li.classList.remove("drop-above", "drop-below");
+  li.dataset.dropPos = "";
+});
+
+li.addEventListener("drop", (e) => {
+  e.preventDefault();
+  li.classList.remove("drop-above", "drop-below");
+
+  const fromId = draggingId || e.dataTransfer.getData("text/plain");
+  const toId = it.id;
+  const pos = li.dataset.dropPos || "below";
+  li.dataset.dropPos = "";
+
+  if (!fromId || fromId === toId) return;
+
+  const fromIndex = items.findIndex(x => x.id === fromId);
+  let toIndex = items.findIndex(x => x.id === toId);
+  if (fromIndex === -1 || toIndex === -1) return;
+
+  const [moved] = items.splice(fromIndex, 1);
+
+  // if moved item was above target, target index shifts down by 1
+  if (fromIndex < toIndex) toIndex -= 1;
+
+  const insertIndex = (pos === "above") ? toIndex : toIndex + 1;
+  items.splice(insertIndex, 0, moved);
+
+  save();
+  render();
+});
+
+
+          /*
 
           // Save edits on blur
           label.addEventListener("blur", () => {
@@ -395,6 +477,55 @@
               completeItem(it.id);
             }
           });
+          */
+
+          // Double-click to edit
+label.addEventListener("dblclick", (e) => {
+  e.preventDefault();
+  label.dataset.editing = "1";
+  label.contentEditable = "true";
+  label.draggable = false;
+  label.focus();
+
+  // Put cursor at end (nice UX)
+  const range = document.createRange();
+  range.selectNodeContents(label);
+  range.collapse(false);
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+});
+
+// Save edits on blur, then exit edit mode
+label.addEventListener("blur", () => {
+  if (label.dataset.editing !== "1") return;
+
+  const next = label.textContent.trim();
+  label.contentEditable = "false";
+  label.dataset.editing = "0";
+  label.draggable = true;
+  if (!next) {
+    deleteItem(it.id);
+    return;
+  }
+  updateItemText(it.id, next);
+});
+
+// Enter saves, Esc cancels
+label.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    label.blur();
+  }
+  if (e.key === "Escape") {
+    e.preventDefault();
+    // revert text + exit edit mode
+    label.textContent = it.text;
+    label.contentEditable = "false";
+    label.dataset.editing = "0";
+    label.blur();
+  }
+});
 
           const meta = document.createElement("div");
           meta.className = "meta";
